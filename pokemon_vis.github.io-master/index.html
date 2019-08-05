@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width = device-width, initial-scale = 1.0">
+        <link rel="stylesheet" href="pokemon.css">
+        <script type="text/javascript" src="https://d3js.org/d3.v4.js" charset="utf-8"></script>
+        <title> Assignment 7-3-3 - Stanley  Liu (sliu203) </title>
+    </head>
+    
+    <body margin-top: 10%>
+        
+        <h1> 7-3-3: Complete Pokemon Dataset Visualization by Stanley Liu (sliu203)</h1>
+        
+        <p> This is a data visualization of the Complete Pokemon Dataset from Kaggle which includes data from all Pokemon species from Generations 1-7. For each Pokemon species, fields such as their name, number, primary and secondary typings, base combat stats, and other metrics will be visualized. This will enable us to better understand the unique characteristics of each Pokemon subcategory, whether it be generation, typing, or some other grouping. </p>
+        
+        <p> First, let us take an overview of each generation by looking at the average stat distributions for each generation. This will help us see if there has been a noticeable 'power creep' as new games have been released. 
+        The X axis denotes the generation and the y axis is used to show the bandwidth of a stream, each representing a combat stat (attack, sp. attack, defense, sp. defense, speed, and hp).</p>
+        
+        <div id='base_stats'>
+            <script type="text/javascript">
+                        
+                // set the dimensions and margins of the graph
+                var margin = {top: 25, right: 25, bottom: 25, left: 25},
+                    width = 550,
+                    height = 550;
+
+                // append the svg object to the body of the page
+                var svg = d3.select("#base_stats")
+                  .append("svg")
+                    .attr("width", 600).attr("height", 600)
+                  .append("g")
+                    .attr("transform",
+                          "translate(" + margin.left + "," + margin.top + ")");
+
+                
+                 
+                d3.csv("PKMN Gen Combat Stat Avg.csv", function(data){
+                  
+                    // x and y axes 
+                    var x = d3.scaleLinear().domain(d3.extent(data, function(d) { return d.Generation; })).range([0, width]);
+                    svg.append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x).ticks(5));
+
+                    var y = d3.scaleLinear().domain([-250, 250]).range([height, 0]);
+                    svg.append("g").call(d3.axisLeft(y));
+                    
+                    // Keys = CSV column names
+                    keys = ['attack', 'defense', 'sp_attack', 'sp_defense', 'speed', 'hp']
+
+                    // color range
+                    var color = d3.scaleOrdinal()
+                        .domain(keys).range(colorrange = ["#B30000", "#E34A33", "#FC8D59", "#FDBB84", "#FDD49E", "#FEF0D9"]);
+
+                    // data stack
+                    var stackedData = d3.stack()
+                        .offset(d3.stackOffsetSilhouette)
+                        .keys(keys)
+                        (data)
+                
+                    //----On Demand Details-------------------------------------------- 
+                    // tooltip
+                    var Tooltip = svg
+                        .append("text")
+                        .attr("x", width/2)
+                        .attr("y", 0)
+                        .style("opacity", 0)
+                        .style("font-size", 15)
+                    
+                    // Functions for mouseover / mousemove / mouseleave
+                    var mouseover = function(d) {
+                      Tooltip.style("opacity", 1)
+                      d3.selectAll(".Hover").style("opacity", .3)
+                      d3.select(this).style("stroke", "green").style("opacity", 1)
+                    }
+                    var mousemove = function(d,i) {
+                      grp = keys[i]
+                      Tooltip.text(grp)
+                    }
+                    var mouseleave = function(d) {
+                      Tooltip.style("opacity", 0)
+                      d3.selectAll(".Hover").style("opacity", 1).style("stroke", "none")
+                     }
+                    //------------------------------------------------------------------
+                    
+                    // plot 
+                    svg
+                        .selectAll("mylayers")
+                        .data(stackedData)
+                        .enter()
+                        .append("path")
+                          .style("fill", function(d) { return color(d.key); })
+                          .attr("class","Hover")
+                          .attr("d", d3.area()
+                            .x(function(d, i) { return x(d.data.Generation); })
+                            .y0(function(d) { return y(d[0]); })
+                            .y1(function(d) { return y(d[1]); })
+                          )
+                          .on("mouseover", mouseover)
+                          .on("mousemove", mousemove)
+                          .on("mouseleave", mouseleave)
+                })
+                
+                
+            </script>    
+        </div>
+        
+        <p> Each distinctly colored stream in the streamgraph represents a different combat stat. 
+            The plot above shows how each of the average combat stats have fluctuated over the generations. 
+            Furthermore, the total width of a generation's stream is the same as the sum of all the combat stats, also known as the base total.
+            Base totals are good indications of a Pokemon's overall power level. 
+            By this streamgraph, we can tell that there has not been too noticeable of 'power creep' over the generations in terms of combat stats, as the base totals have not fluctuated much.</p>
+        
+        <p> Now, we can also more clearly take a look at how each of the individual stats changes through the generations, rather than focusing on the base totals,
+            by taking a look at this data in a line graph format. This more clearly depicts changes in individual stats. </p>
+         
+        
+        
+        
+        <svg id='line' width="800" height="600">
+            
+        </svg>
+        
+        <script type="text/javascript">
+            var margin = {top: 25, right:120, bottom: 50, left: 25};
+            var width = 1000 - margin.left - margin.right;
+            var height = 600 - margin.top - margin.bottom;
+            
+            var x = d3.scaleLinear().domain(d3.extent(data, function(d) { return d.Generation; })).range([0, width]);
+            var y = d3.scaleLinear().domain([0, 250]).range([height, 0]);
+            
+            d3.select('line').append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x).ticks(5));
+            d3.select('line').append("g").call(d3.axisLeft(y));
+        </script>
+        
+        <div id="line">
+            <script type="text/javascript">
+
+                // set up margins
+                var margin = {top: 25, right:120, bottom: 50, left: 25};
+                var width = 1000 - margin.left - margin.right;
+                var height = 600 - margin.top - margin.bottom;
+
+                // add svg
+                var svg = d3.select("#line")
+                                   
+                
+                // add data
+                d3.csv("Pokemon Misc Small.csv", function(data){
+                    
+                    // set axes ranges
+                    var x = d3.scaleLinear().domain(d3.extent(data, function(d) { return d.Generation; })).range([0, width]);
+                    var y = d3.scaleLinear().domain([0, 250]).range([height, 0]);
+                    
+                    // line
+                    var _line = d3.line()
+                        .x(function(d){return x(d.Generation);})
+                        .y(function(d){return y(d.base_happiness);});
+
+                    svg.append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x).ticks(5));
+                    svg.append("g").call(d3.axisLeft(y));
+                    
+                    data.forEach(function(d){
+                        d.Generation = +d.Generation
+                        d.base_happiness = +d.base_happiness
+                        d.height_m = +d.height_m
+                        d.percentage_male = +d.percentage_male
+                        d.weight_kg = +d.weight_kg
+                    });
+                    
+                var color = d3.scaleOrdinal(d3.schemeCategory10);
+                
+                }
+                
+            </script>
+        </div>
+         
+        <p> Here is another visualization, this time one showing the distributions of type offerings from each generation. </p>
+        
+        <div id="type_dist"> </div>
+        
+        <script type='text/javascript'>
+            
+            // set up svg dimensions
+            var margin = {top: 25, right:120, bottom: 50, left: 25};
+            var width = 1000 - margin.left - margin.right;
+            var height = 600 - margin.top - margin.bottom;
+            
+            // D3
+            var svg = d3.select("#type_dist").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height+ margin.left + margin.right)
+                .append("g")
+            .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+            
+            // data set, also can be found in Type Dist by Gen.csv
+            var data = [
+                { generation:"1", normal:"22",fire:"13",fighting:"8",water:"32",flying:"19",grass:"14",poison:"35",electric:"10",ground:"16",psychic:"14",rock:"11",ice:"9",bug:"12",dragon:"3",ghost:"3",dark:"4",steel:"2",fairy:"5"},
+                { generation:"2", normal:"15",fire:"10",fighting:"3",water:"18",flying:"19",grass:"10",poison:"4",electric:"8",ground:"10",psychic:"10",rock:"7",ice:"5",bug:"10",dragon:"1",ghost:"1",dark:"6",steel:"4",fairy:"8"},
+                { generation:"3", normal:"18",fire:"6",fighting:"7",water:"28",flying:"12",grass:"17",poison:"5",electric:"4",ground:"13",psychic:"20",rock:"12",ice:"6",bug:"14",dragon:"9",ghost:"6",dark:"10",steel:"9",fairy:"5"},
+                { generation:"4", normal:"17",fire:"5",fighting:"7",water:"14",flying:"14",grass:"15",poison:"8",electric:"7",ground:"10",psychic:"9",rock:"7",ice:"6",bug:"9",dragon:"6",ghost:"8",dark:"7",steel:"10",fairy:"2"},
+                { generation:"5", normal:"17",fire:"16",fighting:"15",water:"17",flying:"18",grass:"20",poison:"7",electric:"11",ground:"11",psychic:"15",rock:"10",ice:"7",bug:"18",dragon:"10",ghost:"9",dark:"16",steel:"12",fairy:"2"},
+                { generation:"6", normal:"8",fire:"8",fighting:"4",water:"9",flying:"8",grass:"9",poison:"2",electric:"3",ground:"2",psychic:"6",rock:"8",ice:"4",bug:"3",dragon:"9",ghost:"8",dark:"5",steel:"4",fairy:"13"},
+                { generation:"7", normal:"12",fire:"7",fighting:"9",water:"13",flying:"8",grass:"13",poison:"5",electric:"5",ground:"4",psychic:"8",rock:"4",ice:"1",bug:"11",dragon:"6",ghost:"6",dark:"2",steel:"5",fairy:"12"},
+                ];
+            
+            var dataset = d3.layout.stack()(["normal","fire","fighting","water","flying","grass","poison","electric","ground","psychic","rock","ice","bug","dragon","ghost","dark","steel","fairy"},].map(function(type) {
+                return data.map(function(d) {
+                    return {x: d.Generation, y: +d[type]};
+              });
+            }));
+            
+            // Set x, y and colors
+            var x = d3.scaleOrdinal()
+              .domain(dataset[0].map(function(d) { return d.x; }))
+              .rangeRoundBands([10, width-10], 0.02);
+
+            var y = d3.scaleLinear()
+              .domain([0, d3.max(dataset, function(d) {  return d3.max(d, function(d) { return d.y0 + d.y; });  })])
+              .range([height, 0]);
+            
+            keys = data.columns.slice(1)
+            var colors = d3.scaleLinear().domain(keys).range([["#B30000", "#FEF0D9"]);
+                              
+            // x and y axes
+            var yAxis = d3.svg.axis()
+              .scale(y)
+              .orient("left")
+              .ticks(5)
+              .tickSize(-width, 0, 0)
+              .tickFormat( function(d) { return d } );
+
+            var xAxis = d3.svg.axis()
+              .scale(x)
+              .orient("bottom")
+              .tickFormat(d3.time.format("%Y"));
+
+            svg.append("g")
+              .attr("class", "y axis")
+              .call(yAxis);
+
+            svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + height + ")")
+              .call(xAxis);                                                 
+                                                              
+        </script>
+        
+    </body>
+</html>
